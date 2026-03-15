@@ -31,6 +31,8 @@ export default function Home() {
 
       {/* 1. Hero Scroll Experience */}
       <section className="relative w-full">
+        {/* Visually hidden H1 for SEO */}
+        <h1 className="sr-only">SIP Juice – Fresh Watermelon Juice Drink</h1>
         <ProductBottleScroll folderPath={activeProduct.folderPath} frameCount={activeProduct.frameCount} />
         <ProductTextOverlays product={activeProduct} />
       </section>
@@ -48,7 +50,7 @@ export default function Home() {
             {activeProduct.detailsSection.title}
           </h2>
           <p className="text-xl md:text-2xl text-gray-300 leading-relaxed font-light">
-            {activeProduct.detailsSection.description}
+            SIP Juice is a refreshing watermelon drink made from natural ingredients. Experience the fresh taste of SIP Juice. {activeProduct.detailsSection.description}
           </p>
         </motion.div>
         

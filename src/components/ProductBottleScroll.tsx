@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { useScroll, useTransform } from 'framer-motion';
+import { useEffect, useRef, useMemo } from 'react';
+import { useScroll, useTransform, useSpring } from 'framer-motion';
 
 interface Props {
   folderPath: string;
@@ -11,90 +11,141 @@ interface Props {
 export default function ProductBottleScroll({ folderPath, frameCount }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const lastWidth = useRef(0);
+  
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ['start start', 'end end']
   });
 
-  const currentFrame = useTransform(scrollYProgress, [0, 1], [1, frameCount]);
+  // Smooth the scroll progress to prevent jitter on mobile
+  const smoothScrollY = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001
+  });
+
+  const currentFrame = useTransform(smoothScrollY, [0, 1], [1, frameCount]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const context = canvas.getContext('2d');
+    const context = canvas.getContext('2d', { alpha: false }); // Optimization: no alpha needed for JPGs
     if (!context) return;
 
     // Load images
     const images: HTMLImageElement[] = [];
     let loadedImages = 0;
 
+    // Preload important frames first (first, middle, last)
+    const priorityFrames = [1, Math.floor(frameCount / 2), frameCount];
+    
     for (let i = 1; i <= frameCount; i++) {
       const img = new Image();
       const paddedIndex = i.toString().padStart(3, '0');
       img.src = `${folderPath}/ezgif-frame-${paddedIndex}.jpg`;
-      images.push(img);
-      img.onload = () => {
-        loadedImages++;
-        if (loadedImages === 1) {
-          drawFrame(images[0]);
-        }
-      };
+      
+      if (priorityFrames.includes(i)) {
+        img.decode().then(() => {
+          images[i - 1] = img;
+          loadedImages++;
+          if (i === 1) drawFrame(img);
+        }).catch(() => {
+          images[i - 1] = img;
+        });
+      } else {
+        images.push(img);
+        img.onload = () => {
+          loadedImages++;
+          if (loadedImages === 1) drawFrame(img);
+        };
+      }
     }
 
     const drawFrame = (img: HTMLImageElement) => {
+      if (!img || !img.complete) return;
+      
+      const dpr = window.devicePixelRatio || 1;
+      const canvasWidth = canvas.width / dpr;
+      const canvasHeight = canvas.height / dpr;
+      
       context.clearRect(0, 0, canvas.width, canvas.height);
       
-      const canvasRatio = canvas.width / canvas.height;
+      const canvasRatio = canvasWidth / canvasHeight;
       const imgRatio = img.width / img.height;
       
       let drawWidth, drawHeight;
       if (canvasRatio > imgRatio) {
-        drawHeight = canvas.height;
-        drawWidth = img.width * (canvas.height / img.height);
+        drawHeight = canvasHeight;
+        drawWidth = img.width * (canvasHeight / img.height);
       } else {
-        drawWidth = canvas.width;
-        drawHeight = img.height * (canvas.width / img.width);
+        drawWidth = canvasWidth;
+        drawHeight = img.height * (canvasWidth / img.width);
       }
       
-      const offsetX = (canvas.width - drawWidth) / 2;
-      const offsetY = (canvas.height - drawHeight) / 2;
+      const offsetX = (canvasWidth - drawWidth) / 2;
+      const offsetY = (canvasHeight - drawHeight) / 2;
       
-      // Black background for the canvas itself since the source is jpg
+      context.save();
+      context.scale(dpr, dpr);
+      // Black background
       context.fillStyle = '#000000';
-      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.fillRect(0, 0, canvasWidth, canvasHeight);
       context.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+      context.restore();
     };
 
     const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      
+      // On mobile, height changes frequently due to URL bar. 
+      // Only resize if width changes or height changes significantly (> 100px)
+      const heightDiff = Math.abs(height - (canvas.height / (window.devicePixelRatio || 1)));
+      if (width === lastWidth.current && heightDiff < 100) return;
+      
+      lastWidth.current = width;
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+
       const current = Math.round(currentFrame.get());
-      if (images[current - 1] && images[current - 1].complete) {
-        drawFrame(images[current - 1]);
+      const img = images[current - 1];
+      if (img && img.complete) {
+        drawFrame(img);
       }
     };
 
     window.addEventListener('resize', handleResize);
     handleResize();
 
+    let animationFrameId: number;
     const unsubscribe = currentFrame.on('change', (latest) => {
       const index = Math.min(frameCount - 1, Math.max(0, Math.round(latest) - 1));
       const img = images[index];
       if (img && img.complete) {
-        requestAnimationFrame(() => drawFrame(img));
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = requestAnimationFrame(() => drawFrame(img));
       }
     });
 
     return () => {
       window.removeEventListener('resize', handleResize);
       unsubscribe();
+      cancelAnimationFrame(animationFrameId);
     };
   }, [currentFrame, folderPath, frameCount]);
 
   return (
-    <div ref={containerRef} className="relative h-[500vh] w-full bg-black">
-      <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden">
-        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full object-cover" />
+    <div ref={containerRef} className="relative h-[500vh] w-full bg-black" style={{ transform: 'translateZ(0)' }}>
+      <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden will-change-transform">
+        <canvas 
+          ref={canvasRef} 
+          className="absolute inset-0 w-full h-full object-cover" 
+          style={{ touchAction: 'none', willChange: 'transform' }}
+        />
       </div>
     </div>
   );
