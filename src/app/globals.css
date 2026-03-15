@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+::selection {
+  background: #ff4d6d;
+  color: white;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  /* Basic background, will be overridden by the product theme gradient dynamically if needed */
+  background: white;
+  color: #111;
+  overflow-x: hidden; /* minimal scrollbars */
+  scrollbar-width: thin;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+::-webkit-scrollbar {
+  width: 6px;
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+}
