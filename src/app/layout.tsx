@@ -5,15 +5,15 @@ import './globals.css';
 const outfit = Outfit({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'SIP Juice – Fresh Watermelon Juice | Natural & Refreshing',
-  description: 'Sip Juice offers fresh and refreshing watermelon juice made from natural ingredients. Enjoy the perfect healthy drink anytime.',
-  keywords: 'sip juice, watermelon juice, fresh juice, healthy juice drink',
+  title: 'Maple SIP Juice – Best Healthy Watermelon Juice | Wedding & Bottled Drinks',
+  description: 'Maple SIP Juice offers the best healthy and refreshing watermelon juice. Perfect for weddings, events, and daily bottled hydration. Made from 100% natural ingredients.',
+  keywords: 'maple sip juice, sip juice, best healthy juice, wedding juices, bottle drinks, watermelon juice, natural refreshing drink',
   alternates: {
     canonical: 'https://sip-pied.vercel.app/',
   },
   openGraph: {
-    title: 'SIP Juice – Fresh Watermelon Juice',
-    description: 'Refreshing watermelon juice made with natural ingredients.',
+    title: 'Maple SIP Juice – Fresh, Healthy & Natural Watermelon Juice',
+    description: 'Refreshing bottled watermelon juice for daily health or special events like weddings. Discover Maple SIP Juice.',
     url: 'https://sip-pied.vercel.app/',
     siteName: 'SIP Juice',
     images: [
