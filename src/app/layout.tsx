@@ -14,6 +14,9 @@ export const metadata: Metadata = {
     siteName: 'SIP Juice',
     type: 'website',
   },
+  verification: {
+    google: 'google9f722d60581a6476',
+  },
 };
 
 export default function RootLayout({
