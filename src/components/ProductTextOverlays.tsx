@@ -4,6 +4,7 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import { useRef } from 'react';
 import { Product } from '@/data/products';
 import { ChevronDown } from 'lucide-react';
+import { useIsMobile } from '@/hooks/useIsMobile';
 
 interface Props {
   product: Product;
@@ -11,6 +12,7 @@ interface Props {
 
 export default function ProductTextOverlays({ product }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ['start start', 'end end']
@@ -22,11 +24,11 @@ export default function ProductTextOverlays({ product }: Props) {
   const opacity3 = useTransform(scrollYProgress, [0.5, 0.6, 0.7, 0.75], [0, 1, 1, 0]);
   const opacity4 = useTransform(scrollYProgress, [0.75, 0.85, 0.95, 1], [0, 1, 1, 0]);
 
-  // Minor vertical movements for parallax
-  const y1 = useTransform(scrollYProgress, [0, 0.25], [50, -50]);
-  const y2 = useTransform(scrollYProgress, [0.25, 0.5], [50, -50]);
-  const y3 = useTransform(scrollYProgress, [0.5, 0.75], [50, -50]);
-  const y4 = useTransform(scrollYProgress, [0.75, 1], [50, -50]);
+  // Minor vertical movements for parallax - disabled on mobile
+  const y1 = useTransform(scrollYProgress, [0, 0.25], isMobile ? [0, 0] : [50, -50]);
+  const y2 = useTransform(scrollYProgress, [0.25, 0.5], isMobile ? [0, 0] : [50, -50]);
+  const y3 = useTransform(scrollYProgress, [0.5, 0.75], isMobile ? [0, 0] : [50, -50]);
+  const y4 = useTransform(scrollYProgress, [0.75, 1], isMobile ? [0, 0] : [50, -50]);
 
   // Scroll indicator opacity
   const scrollArrowOpacity = useTransform(scrollYProgress, [0, 0.05], [1, 0]);

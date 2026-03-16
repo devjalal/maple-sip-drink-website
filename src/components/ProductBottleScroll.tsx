@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useMemo } from 'react';
 import { useScroll, useTransform, useSpring } from 'framer-motion';
+import { useIsMobile } from '@/hooks/useIsMobile';
 
 interface Props {
   folderPath: string;
@@ -12,6 +13,7 @@ export default function ProductBottleScroll({ folderPath, frameCount }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const lastWidth = useRef(0);
+  const isMobile = useIsMobile();
   
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -19,9 +21,10 @@ export default function ProductBottleScroll({ folderPath, frameCount }: Props) {
   });
 
   // Smooth the scroll progress to prevent jitter on mobile
+  // On mobile, use a more responsive spring (higher stiffness, less damping) to reduce perceived lag
   const smoothScrollY = useSpring(scrollYProgress, {
-    stiffness: 100,
-    damping: 30,
+    stiffness: isMobile ? 300 : 100,
+    damping: isMobile ? 40 : 30,
     restDelta: 0.001
   });
 
